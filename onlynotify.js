@@ -3,13 +3,10 @@ const TelegramBot = require('node-telegram-bot-api');
 const dotenv = require('dotenv')
 dotenv.config()
 
-// Your existing code...
-
-// Create a Telegram bot instance with your bot token
 const botToken = process.env.TOKEN;
 const mnemonic = process.env.MEMONIC;
 const bot = new TelegramBot(botToken, { polling: true });
-let chatIds = []; // Store multiple chatIds
+let chatIds = []; 
 
 const addresses = {
     factory: "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73",
@@ -25,7 +22,9 @@ bot.on('message', (msg) => {
     if (msg.text.toString().toLowerCase().includes('/start')) {
         if (!chatIds.includes(chatId)) {
             chatIds.push(chatId);
+
             bot.sendMessage(chatId, `Hello! Welcome to Paflex Bot.\n I am now your bot. I will notify you about new token pairs.`);
+            
         }
     }
 });
