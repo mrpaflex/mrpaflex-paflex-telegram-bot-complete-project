@@ -157,7 +157,10 @@ const addresses = {
     WBNB: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     router: "0x10ED43C718714eb63d5aA57B78B54704E256024E",
     factory: "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73",
-    me: "0xf2f4F74dcc0C7E59188F79084E7c1D63Da150a21"
+    me: "0xf2f4F74dcc0C7E59188F79084E7c1D63Da150a21",
+    APPROVED_GAS_LIMIT: process.env.APPROVE_TOKEN_GAS_LIMIT,
+    APPROVED_GWEI: ethers.utils.parseUnits(process.env.APPROVE_TOKEN_GWEI, 'gwei')
+
 };
 
 const provider = new ethers.providers.WebSocketProvider(process.env.QUICKHTTP);
@@ -171,7 +174,7 @@ bot.on('message', (msg) => {
         if (!chatIds.includes(chatId)) {
             chatIds.push(chatId);
 
-            bot.sendMessage(chatId, `Hello! Welcome to Paflex Bot.\nI am now your bot. I will notify you about new token pairs.`);
+            bot.sendMessage(chatId, `Hello! Welcome to Paflex Bot.\n I am now your bot. I will notify you about new token pairs.`);
         }
     }
 });
@@ -186,7 +189,8 @@ const router = new ethers.Contract(
     addresses.router,
     [
         'function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)',
-        'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)',
+        'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path,address to, uint deadline ) external returns (uint[] memory amounts)',
+        // 'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)',
         'function approve(address spender, uint amount) external returns (bool)',
     ],
     account
@@ -223,30 +227,43 @@ factory.on("PairCreated", async (token0, token1, addressPair) => {
 
       
 
-        const amountIn = ethers.utils.parseUnits('0.0031', 'ether');
+        const amountIn = ethers.utils.parseUnits('0.0011');
         const amounts = await router.getAmountsOut(amountIn, [buyToken, sellToken]);
-        const amountOutMin = amounts[1].sub(amounts[1].div(10));
+        let amountOutMin = amounts[1].sub(amounts[1].div(10));
 
-        // Delay for 5 minutes before executing the trade
+        // Ensure that the account has approved the router to spend the tokens
+       
+
+        console.log(`approving token\n ${token0}`)
+        const approvalTx = await router.approve(
+            token0,
+            amountIn, 
+            {
+                gasLimit: addresses.APPROVED_GAS_LIMIT,
+                gasPrice: addresses.APPROVED_GWEI
+            }
+             );
+        const apptxn = await approvalTx.wait();
+        console.log(' token approved', apptxn)
+
+        // Delay for 30 second before executing the trade
         setTimeout(async () => {
+        
             try {
-                // Ensure that the account has approved the router to spend the tokens
                 bot.sendMessage(chatIds[0], `buying now... \n${token0}`);
-                const approvalTx = await router.approve(addresses.router, amountIn, { gasLimit: 200000 });
-                await approvalTx.wait();
-
-                // Now proceed with the swap
                 const swapTx = await router.swapExactTokensForTokens(
                     amountIn,
                     amountOutMin,
                     [buyToken, sellToken],
                     addresses.me,
                     Date.now() + 1000 * 60 * 5, // 5 minutes
-                    { gasLimit: 250000 }
+                    { 
+                        gasLimit: 210000
+                     }
                 );
 
                 const swapReceipt = await swapTx.wait();
-               // console.log(swapReceipt)
+               console.log('swap sucessful',swapReceipt)
 
                 if (!swapReceipt.error) {
                     bot.sendMessage(chatIds[0], 'Swap Transaction successful!');
@@ -257,7 +274,7 @@ factory.on("PairCreated", async (token0, token1, addressPair) => {
                // console.error('Swap Error:', error.message);
                 bot.sendMessage(chatIds[0], `Swap Error: ${error.message}`);
             }
-        }, 60000); // 30 seconds delay (adjust as needed)
+        }, 30000); // 30 seconds delay (adjust as needed)
 
         // setTimeout(async () => {
         //     try {
