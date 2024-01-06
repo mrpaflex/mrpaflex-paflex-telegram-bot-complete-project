@@ -19,7 +19,7 @@ const addresses = {
     APPROVED_GWEI: ethers.utils.parseUnits(process.env.APPROVE_TOKEN_GWEI, 'gwei')
 };
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.BSC_RPC_URL);
+const provider = new ethers.providers.WebSocketProvider(process.env.BSC_RPC_URL);
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
 const account = wallet.connect(provider);
 

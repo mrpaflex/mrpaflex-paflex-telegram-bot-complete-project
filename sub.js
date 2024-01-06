@@ -129,3 +129,34 @@ factory.on("PairCreated", async (token0, token1, addressPair) => {
 });
 
 console.log('Bot running now');
+
+
+
+setTimeout(async () => {
+    const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
+    console.log('this is get Amount out', amounts);
+    const amountOutMin = amounts[1].sub(amounts[1].div(10));
+
+    console.log(`
+        Buying new token
+        =================
+        tokenIn: ${amountIn.toString()} ${tokenIn} (WBNB)
+        tokenOut: ${amountOutMin.toString()} ${tokenOut}
+    `);
+
+    try {
+        const tx = await router.swapExactTokensForTokens(
+            amountIn,
+            amountOutMin,
+            [tokenIn, tokenOut],
+            addresses.recipient,
+            Date.now() + 1000 * 60 * 10 // 1 minute
+        );
+        const receipt = await tx.wait();
+        console.log('Transaction successful');
+        console.log('Transaction receipt:');
+        console.log(receipt);
+    } catch (error) {
+        console.error('Transaction failed:', error);
+    }
+}, 30000);//30 second
