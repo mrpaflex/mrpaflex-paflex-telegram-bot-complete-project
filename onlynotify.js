@@ -44,8 +44,12 @@ factory.on("PairCreated", async (token0, token1, addressPair) => {
         const link = `https://pancakeswap.finance/swap?utm_source=tokenpocket&outputCurrency=${token1}`;
 
         for (const chatId of chatIds) {
-            bot.sendMessage(chatId, `New pair detected on Binance Smart Chain:\nToken0: ${token0}\nToken1: ${token1}\nAddress Pair: ${addressPair}\nBuy Link:${link}`);
+            bot.sendMessage(chatId, 
+                `New pair detected on Binance Smart Chain:\nToken0: ${token0}\nToken1: ${token1}\nAddress Pair: ${addressPair}\nBuy Link:${link}`);
         }
+
+        //check if the new pair is horneyPoit
+        
 
     } catch (error) {
         // Handle errors as needed
